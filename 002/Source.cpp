@@ -53,11 +53,11 @@ main(int, char**)
 
     double** Pwt = new double* [numMgs]; // Wind turbine power generation
     Pwt[0] = new double[T] {10, 15, 20, 23, 28, 33, 35, 34, 70, 80, 90, 100, 100, 100, 100, 40, 50, 60, 70, 80, 90, 100, 100, 100};
-    Pwt[1] = new double[T] { 70, 80, 90, 100, 100, 35, 34, 70, 80, 90, 100, 100, 100, 100, 40, 50, 60, 70, 80, 90, 100, 100, 100};
+    Pwt[1] = new double[T] { 70, 80, 90, 100, 100, 35, 34, 70, 80, 90, 100, 100, 100, 100, 40, 50, 60, 70, 80, 90, 100, 100, 100,100};
 
 
     //// ADDED LINE
-    //Pwt[2] = new double[T] { 70, 80, 90, 100, 100, 35, 34, 70, 80, 90, 100, 100, 100, 100, 40, 50, 60, 70, 80, 90, 100, 100, 100};
+    //Pwt[2] = new double[T] { 70, 80, 90, 100, 100, 35, 34, 70, 80, 90, 100, 100, 100, 100, 40, 50, 60, 70, 80, 90, 100, 100, 100,100};
 
 
 #pragma endregion
@@ -73,14 +73,18 @@ main(int, char**)
     NumVar2D Psell(env, numMgs); // Power sold to the grid
     NumVar2D SOC(env, numMgs); // State of charge of the battery
 
+    NumVar2D Bin(env, numMgs); // State of charge of the battery
+
+
     for (int i = 0; i < numMgs; i++)
     {
-        Pdg[i] = IloNumVarArray(env, T, 0, dgMax);
-		Pchg[i] = IloNumVarArray(env, T, 0, chgMax);
-		Pdch[i] = IloNumVarArray(env, T, 0, dchMax);
-		Pbuy[i] = IloNumVarArray(env, T, 0, IloInfinity);
-		Psell[i] = IloNumVarArray(env, T, 0, IloInfinity);
-		SOC[i] = IloNumVarArray(env, T, 0, 1);
+        Pdg[i] = IloNumVarArray(env, T, 0, dgMax, ILOFLOAT);
+		Pchg[i] = IloNumVarArray(env, T, 0, chgMax, ILOFLOAT);
+		Pdch[i] = IloNumVarArray(env, T, 0, dchMax, ILOFLOAT);
+		Pbuy[i] = IloNumVarArray(env, T, 0, IloInfinity, ILOFLOAT);
+		Psell[i] = IloNumVarArray(env, T, 0, IloInfinity, ILOFLOAT);
+		SOC[i] = IloNumVarArray(env, T, 0, 1, ILOFLOAT);
+        Bin[i] = IloNumVarArray(env, T, 0, 1, ILOINT); // Binary variable for battery charging/discharging
     }
 
 #pragma endregion
@@ -149,6 +153,10 @@ main(int, char**)
                 model.add(Pchg[i][t] <= (1 - SOC[i][t - 1]) * capBatt[i] / chargeEff);
 				model.add(Pdch[i][t] <= SOC[i][t - 1] * capBatt[i] * dischargeEff);
 			}
+
+            // Binary variable constraints
+			model.add(Pchg[i][t] <= chgMax * Bin[i][t]);
+			model.add(Pdch[i][t] <= dchMax * (1 - Bin[i][t]));
 
         }
     } 

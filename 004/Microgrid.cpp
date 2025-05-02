@@ -141,7 +141,8 @@ opt_res Microgrid::get_results()
 
 opt_res Microgrid::run_optimization()
 {
-	
+	print_info();
+
 	// Constants
 	double M = 1000000;
 	
@@ -154,7 +155,7 @@ opt_res Microgrid::run_optimization()
 	IloNumVarArray p_short(env, T, 0, IloInfinity, ILOFLOAT);
 	IloNumVarArray p_battery_chg(env, T, 0, IloInfinity, ILOFLOAT);
 	IloNumVarArray p_battery_dch(env, T, 0, IloInfinity, ILOFLOAT);
-	IloNumVarArray battery_soc(env, T, 0, IloInfinity, ILOFLOAT);
+	IloNumVarArray battery_soc(env, T, 0, 1, ILOFLOAT);
 	IloNumVarArray p_dg(env, T, 0, IloInfinity, ILOFLOAT);
 
 	//binary variable
@@ -174,7 +175,7 @@ opt_res Microgrid::run_optimization()
 	for (int t = 0; t < T; t++)
 	{
 
-		// limiting and binary constraints
+		// limiting and binary constraintss
 		model.add(p_dg[t] >= dg_min);
 		model.add(p_dg[t] <= dg_max);
 		model.add(p_battery_chg[t] <= battery_chg_max * omega[t]);
@@ -213,6 +214,8 @@ opt_res Microgrid::run_optimization()
 
 	// Solve the model
 	IloCplex cplex(model);
+	cplex.setOut(env.getNullStream());
+
 	cplex.solve();
 
 	// Print the objective value

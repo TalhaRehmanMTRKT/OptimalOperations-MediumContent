@@ -10,6 +10,8 @@ CentralEMS::CentralEMS(int T, double* c_buy, double* c_sell, vector<opt_res> mgs
 	this->c_sell = c_sell;
 	this->mgs_results = mgs_results;
 	this->num_mgs = mgs_results.size();
+
+	cout << "CentralEMS initialized with " << num_mgs << " microgrids." << endl;
 }
 
 void CentralEMS::run_optimization()
@@ -52,6 +54,7 @@ void CentralEMS::run_optimization()
 
 	// Solve the model
 	IloCplex cplex(model);
+	cplex.setOut(env.getNullStream());
 	cplex.solve();
 
 	// Print the objective value
